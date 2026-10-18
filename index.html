@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thư Gửi Em Yêu - 20/10</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #fff0f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; position: relative; }
+        
+        /* Tường ảnh nền xuất hiện lần lượt khi click */
+        .bg-photo-wall { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 20px; box-sizing: border-box; pointer-events: none; }
+        .bg-photo-wall img { width: 100%; height: 220px; object-fit: cover; border-radius: 10px; opacity: 0; transform: scale(0.8) translateY(20px); transition: all 1.5s ease-in-out; filter: blur(0.5px); }
+        .bg-photo-wall img.reveal { opacity: 0.18; transform: scale(1) translateY(0); }
+
+        .main-title { color: #ff3366; text-shadow: 2px 2px 4px rgba(0,0,0,0.05); font-size: 28px; margin-bottom: 20px; text-align: center; font-weight: bold; z-index: 2; transition: 0.5s; }
+        .wrapper { display: flex; gap: 30px; justify-content: center; align-items: center; max-width: 1200px; width: 100%; z-index: 2; height: 600px; position: relative; }
+        
+        /* Giai đoạn 1: Khung lưới 9 ô ghép ảnh ban đầu */
+        .puzzle-container { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(255, 182, 193, 0.4); text-align: center; max-width: 360px; width: 100%; transition: all 1s ease-in-out; position: absolute; z-index: 10; }
+        .grid-9 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; background: #fff5f5; padding: 5px; border-radius: 10px; margin-top: 15px; }
+        .grid-9 .cell { width: 100%; height: 100px; background: #ffe6eb; border-radius: 5px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px dashed #ffb6c1; }
+        .grid-9 .cell img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Giai đoạn 3: Hai khối nội dung chính sau khi dịch chuyển */
+        .card { background: rgba(255, 255, 255, 0.95); border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.06); padding: 30px; width: 46%; height: 560px; box-sizing: border-box; backdrop-filter: blur(5px); opacity: 0; transform: scale(0.9); transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1); position: absolute; }
+        
+        /* Khối lá thư (Nằm bên trái) */
+        .letter-card { left: 0; display: none; border: 2px solid #ffb6c1; }
+        .letter-header { color: #ff3366; font-size: 22px; font-weight: bold; border-bottom: 1px dashed #ffb6c1; padding-bottom: 10px; margin-bottom: 15px; text-align: center; }
+        .letter-content { font-size: 15px; line-height: 1.8; color: #e6005c; font-weight: 500; font-style: italic; white-space: pre-wrap; height: 440px; overflow-y: auto; }
+        .letter-content::-webkit-scrollbar { width: 3px; }
+        .letter-content::-webkit-scrollbar-thumb { background: #ffb6c1; }
+
+        /* Khối cây Canvas (Dịch chuyển sang bên phải) */
+        .tree-card { right: 27%; width: 46%; display: none; flex-direction: column; align-items: center; justify-content: flex-start; }
+        .girl-mini-photo { max-width: 110px; max-height: 120px; object-fit: cover; border-radius: 10px; border: 3px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 5px; }
+        #canvasContainer { width: 100%; height: 380px; position: relative; margin-top: auto; }
+        canvas { width: 100%; height: 100%; }
+
+        /* Hiệu ứng nhắc nhở chạm màn hình */
+        #clickHint { position: absolute; bottom: 15px; color: #ff3366; font-size: 16px; font-weight: bold; background: white; padding: 8px 15px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: none; z-index: 100; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <!-- 8 ẢNH KỶ NIỆM HIỆN PHÍA SAU -->
+    <div class="bg-photo-wall" id="photoWall">
+        <img src="anh1.jpg" alt="Kỷ niệm 1">
+        <img src="anh2.jpg" alt="Kỷ niệm 2">
+        <img src="anh3.jpg" alt="Kỷ niệm 3">
+        <img src="anh4.jpg" alt="Kỷ niệm 4">
+        <img src="anh5.jpg" alt="Kỷ niệm 5">
+        <img src="anh6.jpg" alt="Kỷ niệm 6">
+        <img src="anh7.jpg" alt="Kỷ niệm 7">
+        <img src="anh8.jpg" alt="Kỷ niệm 8">
+    </div>
+
+    <div class="main-title" id="webTitle">💖 Quà Tặng 20/10 Ý Nghĩa Cho Em 💖</div>
+
+    <div class="wrapper" id="stageWrapper">
+        
+        <!-- BƯỚC 1: Khung lưới 9 ô ghép ảnh ban đầu (ĐÃ NHÚNG SẴN ẢNH) -->
+        <div class="puzzle-container" id="puzzleBox">
+            <h3 style="color: #ff3366; margin: 0 0 15px 0;">💝 Đang Tự Động Ghép Ảnh... 💝</h3>
+            
+            <div class="grid-9">
+                <div class="cell"><img src="data:image/svg+xml;utf8,<svg xmlns='http://w3.org' width='100' height='100' viewBox='0 0 24 24' fill='%23ff4d6d'><path d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/></svg>"></div>
+                <div class="cell"><img src="data:image/svg+xml;utf8,<svg xmlns='http://w3.org' width='100' height='100' viewBox='0 0 24 24' fill='%23ff4d6d'><path d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/></svg>"></div>
+                <div class="cell"><img src="data:image/svg+xml;utf8,<svg xmlns='http://w3.org' width='100' height='100' viewBox='0 0 24 24' fill='%23ff4d6d'><path d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/></svg>"></div>
+                <div class="cell"><img src="data:image/svg+xml;utf8,<svg xmlns='http://w3.org' width='100' height='100' viewBox='0 0 24 24' fill='%23ff4d6d'><path d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/></svg>"></div>
+                <div class="cell"><img src="data:image/svg+xml;utf8,<svg xmlns='http://w3.org' width='100' height='100' viewBox='0 0 24 24' fill='%23ff4d6d'><path d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/></svg>"></div>
+                <div class="cell"><img src="data:image/svg+xml;utf8,<svg xmlns='http://w3.org' width='100' height='100' viewBox='0 0 24 24' fill='%23ff4d6d'><path d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/></svg>"></div>
+                <div class="cell"><img src="data:image/svg+xml;utf8,<svg xmlns='http://w3.org' width='100' height='100' viewBox='0 0 24 24' fill='%23ff4d6d'><path d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/></svg>"></div>
+                <div class="cell"><img src="data:image/svg+xml;utf8,<svg xmlns='http://w3.org' width='100' height='100' viewBox='0 0 24 24' fill='%23ff4d6d'><path d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/></svg>"></div>
+                <div class="cell"><img src="data:image/svg+xml;utf8,<svg xmlns='http://w3.org' width='100' height='100' viewBox='0 0 24 24' fill='%23ff4d6d'><path d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/></svg>"></div>
+            </div>
+        </div>
+
+        <!-- BƯỚC 3: Khối Lá thư xuất hiện bên trái -->
+        <div class="card letter-card" id="letterBox">
+            <div class="letter-header">💗 Thư Gửi Công Chúa Nhỏ 💗</div>
+            <div class="letter-content" id="typewriterText"></div>
+        </div>
+
+        <!-- BƯỚC 2 & 3: Khối Cây Canvas hiển thị mọc và dịch chuyển -->
+        <div class="card tree-card" id="treeBox">
+            <img id="finalPhoto" src="data:image/svg+xml;utf8,<svg xmlns='http://w3.org' width='100' height='100' viewBox='0 0 24 24' fill='%23ff4d6d'><path d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/></svg>" class="girl-mini-photo" alt="Bạn gái">
+            <div id="canvasContainer">
+                <canvas id="treeCanvas"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="clickHint">👉 Bấm vào màn hình để mở hộp kỷ niệm... 🥰</div>
+
+    <script>
